@@ -53,7 +53,9 @@ class webserverHandler(BaseHTTPRequestHandler):
                 output = ""
                 output += "<html><body>"
                 for item in q:
-                    output += "<h1>%s</h1>" % item.name
+                    output += "%s<br>" % item.name
+                    output += "<a href = '#'>Edit</a><br>"
+                    output += "<a href = '#'>Delete</a><br><br>"
                 output += "</html></body>"
 
                 self.wfile.write(output)
