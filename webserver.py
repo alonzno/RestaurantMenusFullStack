@@ -18,31 +18,6 @@ session = DBSession()
 class webserverHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         try:
-            if self.path.endswith("/hello"):
-                self.send_response(200)
-                self.send_header('Content-type', 'text/html')
-                self.end_headers()
-
-                output = ""
-                output += "<html><body>Hello!"
-                output += "<form method='POST' enctype='multipart/form-data' action ='/hello'><h2>What would you like me to say?</h2><input name='message' type = 'text'><input type ='submit' value='Submit'></form>"
-                output += "</body></html>"
-                self.wfile.write(output)
-                print output
-                return
-
-            if self.path.endswith("/hola"):
-                self.send_response(200)
-                self.send_header('Content-type', 'text/html')
-                self.end_headers()
-
-                output = ""
-                output += "<html><body>&#161Hola! <a href = '/hello'>Back to Hello</a>"
-                output += "<form method='POST' enctype='multipart/form-data' action ='/hello'><h2>What would you like me to say?</h2><input name='message' type = 'text'><input type ='submit' value='Submit'></form>"
-                output += "</body></html>"
-                self.wfile.write(output)
-                print output
-                return
             if self.path.endswith("/restaurants"):
                 self.send_response(200)
                 self.send_header('Content-type', 'text/html')
@@ -52,14 +27,37 @@ class webserverHandler(BaseHTTPRequestHandler):
 
                 output = ""
                 output += "<html><body>"
+                output += '<a href = "/restaurants/new">Make a New Restaurant HERE.</a>'
+                output += "<br><br>"
+
                 for item in q:
-                    output += "%s<br>" % item.name
-                    output += "<a href = '#'>Edit</a><br>"
-                    output += "<a href = '#'>Delete</a><br><br>"
+                    output += item.name
+                    output += "<br>"
+                    output += "<a href = '#'>Edit</a>"
+                    output += "<br>"
+                    output += "<a href = '#'>Delete</a>"
+                    output += "<br><br>"
                 output += "</html></body>"
 
                 self.wfile.write(output)
                 print output
+                return
+
+            if self.path.endswith("/restaurants/new"):
+                self.send_response(200)
+                self.send_header('Content-type', 'text/html')
+                self.end_headers()
+
+                output = ""
+                output += "<html><body>"
+                output += "Make a New Restaurant Menu"
+                output += "<br>"
+                output += "<form method='POST' enctype='multipart/form-data' action ='/restaurants/new'><h2>What is the name of the restaurant?</h2><input name='newRestaurantName' type = 'text' placeholder='Restaurant Name Here'><input type ='submit' value='Submit'></form>"
+                output += "</html></body>"
+
+                self.wfile.write(output)
+                print output
+                
                 return
 
         except IOError:
@@ -67,25 +65,39 @@ class webserverHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         try:
-            self.send_response(301)
-            self.end_headers()
-            
-            ctype, pdict = cgi.parse_header(self.headers.getheader('content-type'))
-            if ctype == 'multipart/form-data':
-                fields = cgi.parse_multipart(self.rfile, pdict)
-                messagecontent = fields.get('message')
+            if self.path.endswith("/restaurants/new"):
+                ctype, pdict = cgi.parse_header(self.headers.getheader('content-type'))
+                if ctype == 'multipart/form-data':
+                    fields = cgi.parse_multipart(self.rfile, pdict)
+                    print fields
+                    messagecontent = fields.get('newRestaurantName')
+                
+                    new_restaurant = Restaurant(name=messagecontent[0])
+                    session.add(new_restaurant)
+                    session.commit()
+                    print 'added new restaurant named "%s" to DB' % messagecontent[0]
 
-            output = ""
-            output += "<html><body>"
-            output += "<h2> Okay, how about this: </h2>"
-            output += "<h1> %s </h1>" % messagecontent[0]
+                    self.send_response(301)
+                    self.send_header('Content-type', 'text/html')
+                    self.send_header('Location', '/restaurants')
+                    self.end_headers()
+                    
+                '''
+                output = ""
+                output += "<html><body>"
+                output += "<h2> Okay, how about this: </h2>"
+                output += "<h1> %s </h1>" % messagecontent[0]
 
-            output += "<form method='POST' enctype='multipart/form-data' action ='/hello'><h2>What would you like me to say?</h2><input name='message' type = 'text'><input type ='submit' value='Submit'></form>"
-            output += "</body></html>"
-            self.wfile.write(output)
-            print output
+                output += "<form method='POST' enctype='multipart/form-data' action ='/hello'><h2>What would you like me to say?</h2><input name='message' type = 'text'><input type ='submit' value='Submit'></form>"
+                output += "</body></html>"
+                self.wfile.write(output)
+                print output
+                '''
 
-        except:
+        except Exception as E:
+            #TODO Fix this garbage
+            print "erroreERROROROROROROR"
+            print E
             pass
 def main():
     try:
