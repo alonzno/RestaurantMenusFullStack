@@ -35,7 +35,7 @@ class webserverHandler(BaseHTTPRequestHandler):
                     output += "<br>"
                     output += "<a href = '/restaurants/%s/edit'>Edit</a>" % item.id
                     output += "<br>"
-                    output += "<a href = '#'>Delete</a>"
+                    output += "<a href = '/restaurants/%s/delete'>Delete</a>" % item.id
                     output += "<br><br>"
                 output += "</html></body>"
 
@@ -55,6 +55,24 @@ class webserverHandler(BaseHTTPRequestHandler):
                 output += "Rename %s" % restaurant_item.name
                 output += "<br>"
                 output += "<form method='POST' enctype='multipart/form-data' action ='/restaurants/%s/edit'><h2>What would you like the rename the restaurant?</h2><input name='newRestaurantName' type = 'text' placeholder='Restaurant Name Here'><input type ='submit' value='Submit'></form>" % restaurant_id
+                output += "</html></body>"
+
+                self.wfile.write(output)
+                print output
+            
+            if self.path.endswith("/delete"):
+                self.send_response(200)
+                self.send_header('Content-type', 'text/html')
+                self.end_headers()
+
+                restaurant_id = self.path.split("/")[-2]
+                restaurant_item = session.query(Restaurant).filter(Restaurant.id==restaurant_id)[0]
+
+                output = ""
+                output += "<html><body>"
+                output += "Delete %s?" % restaurant_item.name
+                output += "<br>"
+                output += "<form method='POST' enctype='multipart/form-data' action ='/restaurants/%s/delete'><h2>Are you sure you would like to delete %s?</h2><input type ='submit' value='Yes, I&#39;m sure. DELETE IT!'></form>" % (restaurant_id, restaurant_item.name)
                 output += "</html></body>"
 
                 self.wfile.write(output)
@@ -82,6 +100,25 @@ class webserverHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         try:
+            if self.path.endswith("/delete"):
+                ctype, pdict = cgi.parse_header(self.headers.getheader('content-type'))
+                if ctype == 'multipart/form-data':
+                    #TODO Remove the following two lines
+                    fields = cgi.parse_multipart(self.rfile, pdict)
+                    print fields
+                    
+                    restaurant_id = self.path.split("/")[-2]
+                    restaurant_item = session.query(Restaurant).filter(Restaurant.id==restaurant_id)[0]
+                    print 'deleting restaurant named "%s"' % restaurant_item.name
+
+                    session.delete(restaurant_item)
+                    session.commit()
+
+                    self.send_response(301)
+                    self.send_header('Content-type', 'text/html')
+                    self.send_header('Location', '/restaurants')
+                    self.end_headers()
+
             if self.path.endswith("/edit"):
                 ctype, pdict = cgi.parse_header(self.headers.getheader('content-type'))
                 if ctype == 'multipart/form-data':
