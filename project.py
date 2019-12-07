@@ -1,5 +1,5 @@
 #Flask imports
-from flask import Flask, render_template
+from flask import Flask, render_template, request, redirect, url_for
 
 #Database imports
 from sqlalchemy import create_engine
@@ -24,8 +24,15 @@ def restaurantMenu(restaurant_id):
     html = render_template('menu.html', restaurant=restaurant, items = items)
     return html
 
-@app.route('/restaurants/<int:restaurant_id>/new')
+@app.route('/restaurants/<int:restaurant_id>/new', methods=["GET", "POST"])
 def newMenuItem(restaurant_id):
+    if request.method == "POST":
+        newItem = MenuItem(name = request.form['name'], restaurant_id = restaurant_id)
+        session.add(newItem)
+        session.commit()
+        return redirect(url_for("restaurantMenu", restaurant_id = restaurant_id))
+    else:
+        return render_template('newmenuitem.html', restaurant_id = restaurant_id)
     return "page to create a new menu item."
 
 @app.route('/restaurants/<int:restaurant_id>/edit/<int:menu_id>/')
